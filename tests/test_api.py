@@ -40,16 +40,32 @@ def test_login_returns_jwt_token(base_url, test_user):
     assert "access_token" in response.json()
 
 
-def test_user_login_with_invalid_credentials():
-    pass
+def test_user_login_with_invalid_credentials(base_url, test_user):
 
+    invalid_user = {"username": "nonexistentuser", "password": test_user["password"]}
+    invalid_pw = {"username": test_user["username"], "password": "something"}
+    missing_user = {"username": test_user["username"]}
+    missing_pw = {"password": test_user["password"]}
+    missing_both = {}
+    response = requests.post(f"{base_url}/api/auth/login", json=invalid_user)
+    assert response.status_code == 401
+    assert response.json()["error"] == "Invalid credentials"
 
-def test_user_login_without_auth():
-    pass
+    response = requests.post(f"{base_url}/api/auth/login", json=invalid_pw)
+    assert response.status_code == 401
+    assert response.json()["error"] == "Invalid credentials"
 
+    response = requests.post(f"{base_url}/api/auth/login", json=missing_user)
+    assert response.status_code == 400
+    assert response.json()["error"] == "Username and password are required"
 
-def test_user_logout():
-    pass
+    response = requests.post(f"{base_url}/api/auth/login", json=missing_pw)
+    assert response.status_code == 400
+    assert response.json()["error"] == "Username and password are required"
+
+    response = requests.post(f"{base_url}/api/auth/login", json=missing_both)
+    assert response.status_code == 400
+    assert response.json()["error"] == "Username and password are required"
 
 
 # Event creation tests
@@ -79,28 +95,58 @@ def test_create_public_event_requires_auth_and_succeeds_with_token(base_url, aut
     assert response.json()["capacity"] == public_event_data["capacity"]
 
 
-# def test_create_event_with_invalid_data():
-#     pass
+def test_create_event_with_missing_title(base_url, auth_user):
+    headers = {"Authorization": f"Bearer {auth_user}"}
+    public_event_data = {
+        "title": "",
+        "description": "Monthly Python developer meetup",
+        "date": "2026-01-15T18:00:00",
+        "location": "Tech Hub, Room 101",
+        "capacity": 50,
+        "is_public": True,
+        "requires_admin": False,
+    }
+    response = requests.post(f"{base_url}/api/events", json=public_event_data, headers=headers)
+
+    assert response.status_code == 400
+    assert response.json()["error"] == "Title is required"
 
 
-def test_create_event_with_invalid_user():
-    pass
+def test_create_event_with_missing_datetime(base_url, auth_user):
+    headers = {"Authorization": f"Bearer {auth_user}"}
+    public_event_data = {
+        "title": "Python Meetup",
+        "description": "Monthly Python developer meetup",
+        "date": "",
+        "location": "Tech Hub, Room 101",
+        "capacity": 50,
+        "is_public": True,
+        "requires_admin": False,
+    }
+    response = requests.post(f"{base_url}/api/events", json=public_event_data, headers=headers)
+
+    assert response.status_code == 400
+    assert response.json()["error"] == "Date is required"
 
 
-def test_create_event_with_invalid_date():
-    pass
+def test_create_event_with_invalid_datetime(base_url, auth_user):
+    headers = {"Authorization": f"Bearer {auth_user}"}
+    public_event_data = {
+        "title": "Python Meetup",
+        "description": "Monthly Python developer meetup",
+        "date": "2026-www18:00:00",
+        "location": "Tech Hub, Room 101",
+        "capacity": 50,
+        "is_public": True,
+        "requires_admin": False,
+    }
+    response = requests.post(f"{base_url}/api/events", json=public_event_data, headers=headers)
 
-
-def test_create_event_with_invalid_time():
-    pass
-
-
-def test_create_event_with_invalid_location():
-    pass
-
-
-def test_create_duplicate_event():
-    pass
+    assert response.status_code == 400
+    assert (
+        response.json()["error"]
+        == "Invalid date format. Use ISO 8601 format (e.g., 2024-01-15T18:00:00)"
+    )
 
 
 def test_create_event_without_auth(base_url):

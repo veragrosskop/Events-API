@@ -18,8 +18,3 @@ def test_user_check_password():
     assert _user.check_password("password_test")
 
     assert not _user.check_password("wrong_password")
-    # assert not _user.check_password('')
-    # assert not _user.check_password(None)
-    # assert not _user.check_password(False)
-    # assert not _user.check_password(0)
-    # assert not _user.check_password([])
