@@ -11,8 +11,8 @@ from models import db, User
 # -------------
 
 
-@pytest.fixture
-def base_url(scope="session"):
+@pytest.fixture(scope="session")
+def base_url():
     return "http://localhost:5000"
 
 @pytest.fixture(scope="session", autouse=True)
