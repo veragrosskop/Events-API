@@ -12,9 +12,27 @@ from models import db, User
 
 
 @pytest.fixture
-def base_url():
+def base_url(scope="session"):
     return "http://localhost:5000"
 
+@pytest.fixture(scope="session", autouse=True)
+def seed_admin(base_url):
+    username = "admin"
+    password = "password"
+
+    #avoid duplicate creation
+    response = requests.post(
+        f"{base_url}/api/auth/login",
+        json={"username": username, "password": password},
+    )
+    if response.status_code == 200:
+        return
+
+    # if not, create the admin user
+    requests.post(
+        f"{base_url}/api/auth/register",
+        json={"username": username, "password": password},
+    )
 
 @pytest.fixture()
 def app():
