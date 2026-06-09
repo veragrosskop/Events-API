@@ -25,3 +25,22 @@ jobs:
           docker run -d -p 5000:5000 --name events-api-container events-api:latest
           sleep 5
           curl http://localhost:5000/api/health || exit 1
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: |
+          pytest -v
+
+      - name: Stop Container
+        if: always()
+        run: |
+          docker stop events-api-container
+          docker rm events-api-container
