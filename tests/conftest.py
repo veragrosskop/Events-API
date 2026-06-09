@@ -43,26 +43,6 @@ def new_user():
 
 
 @pytest.fixture()
-def admin_user(app):
-    with app.app_context():
-        username = f"admin_{datetime.datetime.now()}"
-        password = "password"
-        user = User(
-            username=username,
-            is_admin=True,
-        )
-        user.set_password(password)
-
-        db.session.add(user)
-        db.session.commit()
-
-    return {
-        "username": username,
-        "password": password,
-    }
-
-
-@pytest.fixture()
 def test_user(base_url):
     test_user = {"username": "testuser", "password": "testpassword"}
     requests.post(f"{base_url}/api/auth/register", json=test_user)
@@ -77,16 +57,24 @@ def auth_user(base_url, new_user):
 
 
 @pytest.fixture
-def auth_admin(base_url, admin_user):
+def auth_admin(base_url, ):
     response = requests.post(
         f"{base_url}/api/auth/login",
         json={
-            "username": admin_user["username"],
-            "password": admin_user["password"],
+            "username": "admin",
+            "password": "password"
         },
     )
+    data = response.json()
+    assert response.status_code == 200, (
+        f"Login failed: {response.status_code} {data}"
+    )
 
-    return response.json()["access_token"]
+    assert "access_token" in data, (
+        f"No access_token in response: {data}"
+    )
+
+    return data["access_token"]
 
 
 @pytest.fixture()
